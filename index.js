@@ -1,7 +1,7 @@
 const levels = [
 
 {
-    image:"images/level1.png",
+    image:"images/level1.webp",
     previewTime: 5000,
 
 targets:[
@@ -46,7 +46,7 @@ targets:[
 },
 
 {
-    image:"images/level2.png",
+    image:"images/level2.webp",
 previewTime: 5000,
    targets:[
 
@@ -82,7 +82,7 @@ previewTime: 5000,
 },
 
 {
-    image:"images/level3.png",
+    image:"images/level3.webp",
     previewTime: 5000,
 targets:[
 
@@ -124,7 +124,7 @@ targets:[
 },
 
 {
-    image:"images/level4.png",
+    image:"images/level4.webp",
     previewTime: 4000,
     targets:[
 {
@@ -166,7 +166,7 @@ targets:[
 },
 
 {
-    image:"images/level5.png",
+    image:"images/level5.webp",
     previewTime: 4000,
     targets:[
 
@@ -209,7 +209,7 @@ targets:[
 },
 
 {
-    image:"images/level6.png",
+    image:"images/level6.webp",
 previewTime: 5000,
  targets:[
 
@@ -257,7 +257,7 @@ previewTime: 5000,
 },
 
 {
-    image:"images/level7.png",
+    image:"images/level7.webp",
     previewTime: 6000,
    targets:[
 
@@ -299,7 +299,7 @@ previewTime: 5000,
 },
 
 {
-    image:"images/level8.png",
+    image:"images/level8.webp",
     previewTime: 6000,
    targets:[
 
@@ -347,7 +347,7 @@ previewTime: 5000,
 },
 
 {
-    image:"images/level9.png",
+    image:"images/level9.webp",
     previewTime: 4000,
    targets:[
 
@@ -389,7 +389,7 @@ previewTime: 5000,
 },
 
 {
-    image:"images/level10.png",
+    image:"images/level10.webp",
 previewTime: 5000,
   targets:[
 
@@ -430,7 +430,7 @@ previewTime: 5000,
 },
 
 {
-    image:"images/level11.png",
+    image:"images/level11.webp",
 previewTime: 4000,
     targets:[
 
@@ -466,7 +466,7 @@ previewTime: 4000,
 },
 
 {
-    image:"images/level12.png",
+    image:"images/level12.webp",
 previewTime: 6000,
    targets:[
 
@@ -508,7 +508,7 @@ previewTime: 6000,
 },
 
 {
-    image:"images/level13.png",
+    image:"images/level13.webp",
     previewTime: 6000,
    targets:[
 
@@ -550,7 +550,7 @@ previewTime: 6000,
 },
 
 {
-    image:"images/level14.png",
+    image:"images/level14.webp",
     previewTime: 5000,
   targets:[
 
@@ -571,7 +571,7 @@ previewTime: 6000,
 },
 
 {
-    image:"images/level15.png",
+    image:"images/level15.webp",
     previewTime: 4000,
     targets:[
 
@@ -675,55 +675,46 @@ const correctSound = new Audio("./sounds/correct-answer-sound-from-100-to-1-tran
 const winSound = new Audio("./sounds/freesound_community-level-win-6416.mp3");
 const hintSound = new Audio("./sounds/liecio-bonus-points-190035 (1).mp3");
 let shrinkingInterval; 
+
 // solve the problem of shrinkingInterval not being cleared when level changes or game ends
-function preloadImages() {
-    console.log("Starting preloading images..."); 
-    levels.forEach((level) => {
-        const img = new Image();
-        img.src = level.image;
-    });
+async function preloadImages() {
+    console.log("Starting Sequential Preloading...");
+    for (const level of levels) {
+        await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve; 
+            img.src = level.image;
+        });
+    }
+    console.log("All images are now cached!");
 }
+  preloadImages();
+  function setupGameSession(){
+    // اضيفي السطر ده "مرة واحدة فقط" لو الامتدادات لسه معلقة معاكِ png
+    // localStorage.clear(); 
 
-function setupGameSession(){
+    const savedLevels = localStorage.getItem("savedLevels");
+    const savedProgress = localStorage.getItem("memoryLevel");
 
-    const savedLevels =
-    localStorage.getItem(
-        "savedLevels"
-    );
-
-    const savedProgress =
-    localStorage.getItem(
-        "memoryLevel"
-    );
+    // فحص لو البيانات قديمة وفيها png
+    if(savedLevels && savedLevels.includes(".png")){
+        localStorage.removeItem("savedLevels");
+        location.reload(); // إعادة تحميل لتحديث البيانات
+        return;
+    }
 
     if(savedLevels){
-
-        activeLevels =
-        JSON.parse(savedLevels);
-
-        currentLevel =
-        parseInt(savedProgress) || 0;
-
-    }else{
-
-        let shuffled =
-        [...levels]
-        .sort(() => Math.random() - 0.5);
-
-        activeLevels =
-        shuffled.slice(
-            0,
-            GAME_LEVELS
-        );
-
-        localStorage.setItem(
-            "savedLevels",
-            JSON.stringify(activeLevels)
-        );
-
+        activeLevels = JSON.parse(savedLevels);
+        currentLevel = parseInt(savedProgress) || 0;
+    } else {
+        let shuffled = [...levels].sort(() => Math.random() - 0.5);
+        activeLevels = shuffled.slice(0, GAME_LEVELS);
+        localStorage.setItem("savedLevels", JSON.stringify(activeLevels));
         currentLevel = 0;
     }
 }
+
 
 setupGameSession();
 
@@ -778,10 +769,8 @@ function initLevel() {
     foundCount = 0;
     const level = activeLevels[currentLevel];
 
-   
     gameStarted = false;
     clearInterval(shrinkingInterval);
-    
 
     hotspotsContainer.innerHTML = "";
     targetsList.innerHTML = "";
@@ -790,92 +779,89 @@ function initLevel() {
     winScreen.classList.add("hidden");
     darkness.style.opacity = "0";
 
-  
-    sceneImage.src = level.image; 
-
     sceneImage.onload = () => {
-     
-        
-        levelNumber.textContent = currentLevel + 1;
+        requestAnimationFrame(() => {
+            levelNumber.textContent = currentLevel + 1;
 
-        let previewTime = level.previewTime || (5000 - (currentLevel * 500));
-        if (previewTime < 1000) previewTime = 1000; 
+            let previewTime = level.previewTime || (5000 - (currentLevel * 500));
+            if (previewTime < 1000) previewTime = 1000;
 
-        let currentFlashlightSize = 170 - (currentLevel * 10);
-        if (currentFlashlightSize < 80) currentFlashlightSize = 80;
+            let currentFlashlightSize = 170 - (currentLevel * 10);
+            if (currentFlashlightSize < 80) currentFlashlightSize = 80;
 
-        document.documentElement.style.setProperty("--flashlight-size", currentFlashlightSize + "px");
+            document.documentElement.style.setProperty("--flashlight-size", currentFlashlightSize + "px");
 
-     
-        const timerBar = document.getElementById("timerBar");
-        if (timerBar) {
-            timerBar.style.transition = "none"; 
-            timerBar.style.width = "100%";      
-            setTimeout(() => {
-                timerBar.style.transition = `width ${previewTime}ms linear`;
-                timerBar.style.width = "0%";
-            }, 50);
-        }
+           
+            const timerBar = document.getElementById("timerBar");
+            if (timerBar) {
+                timerBar.style.transition = "none";
+                timerBar.style.width = "100%";
+                setTimeout(() => {
+                    timerBar.style.transition = `width ${previewTime}ms linear`;
+                    timerBar.style.width = "0%";
+                }, 50);
+            }
 
-  
-        level.targets.forEach((target) => {
-            const item = document.createElement("div");
-            item.className = "target-item";
-            item.innerHTML = icons[target.name] || "❓";
-            targetsList.appendChild(item);
+           
+            level.targets.forEach((target) => {
+                const item = document.createElement("div");
+                item.className = "target-item";
+                item.innerHTML = icons[target.name] || "❓";
+                targetsList.appendChild(item);
 
-            const hotspot = document.createElement("div");
-            hotspot.className = "hotspot";
-            hotspot.style.left = target.x + "%";
-            hotspot.style.top = target.y + "%";
-            hotspot.style.width = target.w + "%";
-            hotspot.style.height = target.h + "%";
+                const hotspot = document.createElement("div");
+                hotspot.className = "hotspot";
+                hotspot.style.left = target.x + "%";
+                hotspot.style.top = target.y + "%";
+                hotspot.style.width = target.w + "%";
+                hotspot.style.height = target.h + "%";
 
-            hotspot.onclick = () => {
-                if (!gameStarted || item.classList.contains("found")) return;
-                item.classList.add("found");
-                hotspot.style.pointerEvents = "none";
-                foundCount++;
-                correctSound.currentTime = 0; 
-                correctSound.play();
-                hotspot.style.opacity = "1";
-                hotspot.style.background = "rgba(0,255,153,0.25)";
-                hotspot.style.border = "2px solid #00ff99";
-                setTimeout(() => { hotspot.style.opacity = "0"; }, 400);
+                hotspot.onclick = () => {
+                    if (!gameStarted || item.classList.contains("found")) return;
+                    item.classList.add("found");
+                    foundCount++;
+                    correctSound.currentTime = 0;
+                    correctSound.play();
+                    hotspot.style.opacity = "1";
+                    hotspot.style.background = "rgba(0,255,153,0.25)";
+                    hotspot.style.border = "2px solid #00ff99";
+                    setTimeout(() => { hotspot.style.opacity = "0"; }, 400);
 
-                if (foundCount === level.targets.length) {
-                    clearInterval(shrinkingInterval); 
-                    winSound.play();
-                    setTimeout(() => { winScreen.classList.remove("hidden"); }, 700);
-                }
-            };
-            hotspotsContainer.appendChild(hotspot);
-        });
-
-      
-        setTimeout(() => {
-            darkness.style.opacity = "1";
-            targetsList.style.opacity = "1";
-            targetsList.style.pointerEvents = "auto";
-            gameStarted = true;
-
-            shrinkingInterval = setInterval(() => {
-                if (gameStarted && winScreen.classList.contains("hidden")) {
-                    if (currentFlashlightSize > 30) { 
-                        currentFlashlightSize -= 2; 
-                        document.documentElement.style.setProperty(
-                            "--flashlight-size", 
-                            currentFlashlightSize + "px"
-                        );
+                    if (foundCount === level.targets.length) {
+                        clearInterval(shrinkingInterval);
+                        winSound.play();
+                        setTimeout(() => { winScreen.classList.remove("hidden"); }, 700);
                     }
-                }
-            }, 1000);
+                };
+                hotspotsContainer.appendChild(hotspot);
+            });
 
-        }, previewTime);
+           
+            setTimeout(() => {
+                darkness.style.opacity = "1";
+                targetsList.style.opacity = "1";
+                targetsList.style.pointerEvents = "auto";
+                gameStarted = true;
+
+                shrinkingInterval = setInterval(() => {
+                    if (gameStarted && winScreen.classList.contains("hidden")) {
+                        if (currentFlashlightSize > 30) {
+                            currentFlashlightSize -= 2;
+                            document.documentElement.style.setProperty("--flashlight-size", currentFlashlightSize + "px");
+                        }
+                    }
+                }, 1000);
+            }, previewTime);
+        });
     };
-    
 
+    sceneImage.src = level.image;
+    
    
+    if (sceneImage.complete) {
+        sceneImage.onload();
+        sceneImage.onload = null; 
+    }
 }
 
 
@@ -1001,7 +987,7 @@ newRunBtn.onclick = ()=>{
 
 
 document.addEventListener("DOMContentLoaded", () => {
-    preloadImages(); // Preload all level images at the start of the game
+  
     const startScreen = document.getElementById("startScreen");
     const startGameBtn = document.getElementById("startGameBtn");
     const hasSeenIntro = sessionStorage.getItem("hasSeenIntro");
