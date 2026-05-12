@@ -691,16 +691,15 @@ async function preloadImages() {
 }
   preloadImages();
   function setupGameSession(){
-    // اضيفي السطر ده "مرة واحدة فقط" لو الامتدادات لسه معلقة معاكِ png
-    // localStorage.clear(); 
+    
+    
 
     const savedLevels = localStorage.getItem("savedLevels");
     const savedProgress = localStorage.getItem("memoryLevel");
 
-    // فحص لو البيانات قديمة وفيها png
     if(savedLevels && savedLevels.includes(".png")){
         localStorage.removeItem("savedLevels");
-        location.reload(); // إعادة تحميل لتحديث البيانات
+        location.reload(); 
         return;
     }
 
