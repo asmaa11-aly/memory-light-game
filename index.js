@@ -675,7 +675,14 @@ const correctSound = new Audio("./sounds/correct-answer-sound-from-100-to-1-tran
 const winSound = new Audio("./sounds/freesound_community-level-win-6416.mp3");
 const hintSound = new Audio("./sounds/liecio-bonus-points-190035 (1).mp3");
 let shrinkingInterval; 
-
+// solve the problem of shrinkingInterval not being cleared when level changes or game ends
+function preloadImages() {
+    console.log("Starting preloading images..."); 
+    levels.forEach((level) => {
+        const img = new Image();
+        img.src = level.image;
+    });
+}
 
 function setupGameSession(){
 
@@ -771,95 +778,104 @@ function initLevel() {
     foundCount = 0;
     const level = activeLevels[currentLevel];
 
-    sceneImage.src = level.image;
-    levelNumber.textContent = currentLevel + 1;
+   
+    gameStarted = false;
+    clearInterval(shrinkingInterval);
+    
+
     hotspotsContainer.innerHTML = "";
     targetsList.innerHTML = "";
-    
     targetsList.style.opacity = "0";
     targetsList.style.pointerEvents = "none";
-    gameStarted = false;
     winScreen.classList.add("hidden");
     darkness.style.opacity = "0";
 
-    let previewTime = level.previewTime || (5000 - (currentLevel * 500));
-    if (previewTime < 1000) previewTime = 1000; 
+  
+    sceneImage.src = level.image; 
 
-    let currentFlashlightSize = 170 - (currentLevel * 10);
-    if (currentFlashlightSize < 80) currentFlashlightSize = 80;
+    sceneImage.onload = () => {
+     
+        
+        levelNumber.textContent = currentLevel + 1;
 
-    document.documentElement.style.setProperty("--flashlight-size", currentFlashlightSize + "px");
+        let previewTime = level.previewTime || (5000 - (currentLevel * 500));
+        if (previewTime < 1000) previewTime = 1000; 
 
-    const timerBar = document.getElementById("timerBar");
-    if (timerBar) {
-        timerBar.style.transition = "none"; 
-        timerBar.style.width = "100%";      
-        setTimeout(() => {
-            timerBar.style.transition = `width ${previewTime}ms linear`;
-            timerBar.style.width = "0%";
-        }, 50);
-    }
+        let currentFlashlightSize = 170 - (currentLevel * 10);
+        if (currentFlashlightSize < 80) currentFlashlightSize = 80;
 
-    level.targets.forEach((target) => {
-        const item = document.createElement("div");
-        item.className = "target-item";
-        item.innerHTML = icons[target.name] || "❓";
-        targetsList.appendChild(item);
+        document.documentElement.style.setProperty("--flashlight-size", currentFlashlightSize + "px");
 
-        const hotspot = document.createElement("div");
-        hotspot.className = "hotspot";
-        hotspot.style.left = target.x + "%";
-        hotspot.style.top = target.y + "%";
-        hotspot.style.width = target.w + "%";
-        hotspot.style.height = target.h + "%";
+     
+        const timerBar = document.getElementById("timerBar");
+        if (timerBar) {
+            timerBar.style.transition = "none"; 
+            timerBar.style.width = "100%";      
+            setTimeout(() => {
+                timerBar.style.transition = `width ${previewTime}ms linear`;
+                timerBar.style.width = "0%";
+            }, 50);
+        }
 
-        hotspot.onclick = () => {
-            if (!gameStarted || item.classList.contains("found")) return;
-            item.classList.add("found");
-            hotspot.style.pointerEvents = "none";
-            foundCount++;
-            correctSound.currentTime = 0; 
-            correctSound.play();
-            hotspot.style.opacity = "1";
-            hotspot.style.background = "rgba(0,255,153,0.25)";
-            hotspot.style.border = "2px solid #00ff99";
-            setTimeout(() => { hotspot.style.opacity = "0"; }, 400);
+  
+        level.targets.forEach((target) => {
+            const item = document.createElement("div");
+            item.className = "target-item";
+            item.innerHTML = icons[target.name] || "❓";
+            targetsList.appendChild(item);
 
-            if (foundCount === level.targets.length) {
-                clearInterval(shrinkingInterval); 
-                winSound.play();
-                setTimeout(() => { winScreen.classList.remove("hidden"); }, 700);
-            }
-        };
-        hotspotsContainer.appendChild(hotspot);
-    });
+            const hotspot = document.createElement("div");
+            hotspot.className = "hotspot";
+            hotspot.style.left = target.x + "%";
+            hotspot.style.top = target.y + "%";
+            hotspot.style.width = target.w + "%";
+            hotspot.style.height = target.h + "%";
 
+            hotspot.onclick = () => {
+                if (!gameStarted || item.classList.contains("found")) return;
+                item.classList.add("found");
+                hotspot.style.pointerEvents = "none";
+                foundCount++;
+                correctSound.currentTime = 0; 
+                correctSound.play();
+                hotspot.style.opacity = "1";
+                hotspot.style.background = "rgba(0,255,153,0.25)";
+                hotspot.style.border = "2px solid #00ff99";
+                setTimeout(() => { hotspot.style.opacity = "0"; }, 400);
 
-    clearInterval(shrinkingInterval);
-
-    
-    setTimeout(() => {
-        darkness.style.opacity = "1";
-        targetsList.style.opacity = "1";
-        targetsList.style.pointerEvents = "auto";
-        gameStarted = true;
-
-        shrinkingInterval = setInterval(() => {
-            if (gameStarted && winScreen.classList.contains("hidden")) {
-                
-                if (currentFlashlightSize > 30) { 
-                    currentFlashlightSize -= 2; 
-                    
-                    document.documentElement.style.setProperty(
-                        "--flashlight-size", 
-                        currentFlashlightSize + "px"
-                    );
-                    console.log("Current Size:", currentFlashlightSize); 
+                if (foundCount === level.targets.length) {
+                    clearInterval(shrinkingInterval); 
+                    winSound.play();
+                    setTimeout(() => { winScreen.classList.remove("hidden"); }, 700);
                 }
-            }
-        }, 1000);
+            };
+            hotspotsContainer.appendChild(hotspot);
+        });
 
-    }, previewTime);
+      
+        setTimeout(() => {
+            darkness.style.opacity = "1";
+            targetsList.style.opacity = "1";
+            targetsList.style.pointerEvents = "auto";
+            gameStarted = true;
+
+            shrinkingInterval = setInterval(() => {
+                if (gameStarted && winScreen.classList.contains("hidden")) {
+                    if (currentFlashlightSize > 30) { 
+                        currentFlashlightSize -= 2; 
+                        document.documentElement.style.setProperty(
+                            "--flashlight-size", 
+                            currentFlashlightSize + "px"
+                        );
+                    }
+                }
+            }, 1000);
+
+        }, previewTime);
+    };
+    
+
+   
 }
 
 
@@ -985,6 +1001,7 @@ newRunBtn.onclick = ()=>{
 
 
 document.addEventListener("DOMContentLoaded", () => {
+    preloadImages(); // Preload all level images at the start of the game
     const startScreen = document.getElementById("startScreen");
     const startGameBtn = document.getElementById("startGameBtn");
     const hasSeenIntro = sessionStorage.getItem("hasSeenIntro");
